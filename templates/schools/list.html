@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Schools - School Scheduler{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Schools</h1>
+    <p class="mt-2 text-sm text-gray-600">Manage schools and their scheduling scenarios</p>
+</div>
+
+<div class="bg-white shadow overflow-hidden sm:rounded-md">
+    <ul role="list" class="divide-y divide-gray-200">
+        {% for school in schools %}
+        <li>
+            <a href="{% url 'timetable:school_detail' school.id %}" class="block hover:bg-gray-50">
+                <div class="px-4 py-4 sm:px-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-lg font-medium text-blue-600 truncate">
+                                {{ school.name }}
+                            </p>
+                            <div class="mt-2 flex items-center text-sm text-gray-500 space-x-4">
+                                <span>{{ school.cycle_days }} days/cycle</span>
+                                <span>{{ school.periods_per_day }} periods/day</span>
+                                <span>{{ school.period_minutes }} min/period</span>
+                            </div>
+                        </div>
+                        <div>
+                            <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </li>
+        {% empty %}
+        <li class="px-4 py-4 sm:px-6 text-center text-gray-500">
+            No schools found. Run <code class="bg-gray-100 px-2 py-1 rounded">python manage.py seed_data</code> to create test data.
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

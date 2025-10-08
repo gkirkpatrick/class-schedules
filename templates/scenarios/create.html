@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Create Scenario - {{ school.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <nav class="text-sm text-gray-500 mb-4">
+        <a href="/" class="hover:text-gray-700">Schools</a>
+        <span class="mx-2">/</span>
+        <a href="{% url 'timetable:school_detail' school.id %}" class="hover:text-gray-700">{{ school.name }}</a>
+        <span class="mx-2">/</span>
+        <span class="text-gray-900">New Scenario</span>
+    </nav>
+
+    <h1 class="text-3xl font-bold text-gray-900">Create Scheduling Scenario</h1>
+    <p class="mt-2 text-sm text-gray-600">Configure scheduling parameters for {{ school.name }}</p>
+</div>
+
+<div class="bg-white shadow sm:rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+        <div class="text-center py-12">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Configuration Form Coming Soon</h3>
+            <p class="text-gray-600 mb-8">
+                The full configuration form with HTMX will be implemented here.<br>
+                For now, you can create scenarios via Django admin or shell.
+            </p>
+
+            <div class="max-w-2xl mx-auto text-left bg-gray-50 p-6 rounded-lg">
+                <p class="text-sm font-medium text-gray-700 mb-2">To create a test scenario using Django shell:</p>
+                <pre class="bg-gray-900 text-gray-100 p-4 rounded text-xs overflow-x-auto"><code>python manage.py shell
+
+from core.models import School
+from timetable.models import Scenario
+
+school = School.objects.first()
+scenario = Scenario.objects.create(
+    school=school,
+    name="Fall 2024 Schedule",
+    status="DRAFT"
+)
+
+print(f"Created scenario: {scenario.id}")</code></pre>
+            </div>
+
+            <div class="mt-8 space-x-4">
+                <a href="{% url 'timetable:school_detail' school.id %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Back to School
+                </a>
+                <a href="/admin/timetable/scenario/add/"
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                    Create via Admin
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

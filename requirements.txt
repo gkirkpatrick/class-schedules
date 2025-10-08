@@ -1,0 +1,14 @@
+django>=5.0,<6.0
+psycopg2-binary>=2.9
+django-environ>=0.11
+ortools>=9.8
+celery>=5.3
+redis>=5.0
+pulp>=2.7
+pytest>=7.4
+pytest-django>=4.7
+ruff>=0.1
+black>=23.12
+mypy>=1.7
+django-stubs>=4.2
+types-redis>=4.6

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Results - {{ scenario.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <nav class="text-sm text-gray-500 mb-4">
+        <a href="/" class="hover:text-gray-700">Schools</a>
+        <span class="mx-2">/</span>
+        <a href="{% url 'timetable:school_detail' scenario.school.id %}" class="hover:text-gray-700">{{ scenario.school.name }}</a>
+        <span class="mx-2">/</span>
+        <a href="{% url 'timetable:scenario_detail' scenario.id %}" class="hover:text-gray-700">{{ scenario.name }}</a>
+        <span class="mx-2">/</span>
+        <span class="text-gray-900">Results</span>
+    </nav>
+
+    <h1 class="text-3xl font-bold text-gray-900">Schedule Results</h1>
+    <p class="mt-2 text-sm text-gray-600">{{ scenario.name }} - {{ scenario.school.name }}</p>
+</div>
+
+<!-- Tabs -->
+<div class="border-b border-gray-200 mb-6">
+    <nav class="-mb-px flex space-x-8">
+        <a href="#master" onclick="showTab('master')"
+           id="tab-master"
+           class="tab-link border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+            Master Schedule
+        </a>
+        <a href="#teachers" onclick="showTab('teachers')"
+           id="tab-teachers"
+           class="tab-link border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+            Teacher Schedules
+        </a>
+        <a href="#students" onclick="showTab('students')"
+           id="tab-students"
+           class="tab-link border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+            Student Schedules
+        </a>
+        <a href="#diagnostics" onclick="showTab('diagnostics')"
+           id="tab-diagnostics"
+           class="tab-link border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+            Diagnostics
+        </a>
+    </nav>
+</div>
+
+<!-- Tab Content -->
+<div id="content-master" class="tab-content">
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Master Schedule Grid</h2>
+        <p class="text-gray-600 mb-4">Grid view coming soon - showing list view for now</p>
+
+        {% if placements %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Day</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Course</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Teacher</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Room</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for placement in placements %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Day {{ placement.day|add:1 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">P{{ placement.period|add:1 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ placement.section.course.code }}
+                            {% if placement.is_lab %}<span class="ml-1 text-xs text-blue-600">(LAB)</span>{% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ placement.teacher }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ placement.room.name }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-500">No placements found.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div id="content-teachers" class="tab-content hidden">
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-6">Teacher Schedules</h2>
+
+        {% if teacher_schedule_data %}
+            {% for teacher_data in teacher_schedule_data %}
+            <div class="mb-8 border-b pb-6 last:border-b-0">
+                <h3 class="text-base font-semibold text-gray-900 mb-3">
+                    {{ teacher_data.teacher.first_name }} {{ teacher_data.teacher.last_name }}
+                    <span class="ml-2 text-sm font-normal text-gray-500">
+                        ({{ teacher_data.total_periods }} periods scheduled)
+                    </span>
+                </h3>
+
+                <!-- Schedule Grid -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border-collapse border border-gray-300">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="border border-gray-300 px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase w-24">
+                                    Period
+                                </th>
+                                {% for day_num in teacher_data.days %}
+                                <th class="border border-gray-300 px-3 py-2 text-center text-xs font-medium text-gray-700 uppercase">
+                                    Day {{ day_num }}
+                                </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for period_data in teacher_data.grid %}
+                            <tr>
+                                <td class="border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50">
+                                    P{{ period_data.period_num }}
+                                </td>
+                                {% for cell in period_data.cells %}
+                                <td class="border border-gray-300 px-2 py-2 text-xs">
+                                    {% if cell %}
+                                    <div class="bg-blue-50 border border-blue-200 rounded px-2 py-1">
+                                        <div class="font-semibold text-blue-900">{{ cell.course }}</div>
+                                        <div class="text-blue-700">{{ cell.room }}</div>
+                                        {% if cell.is_lab %}
+                                        <div class="text-xs text-blue-600 mt-1">LAB</div>
+                                        {% endif %}
+                                    </div>
+                                    {% else %}
+                                    <div class="text-gray-400 text-center">-</div>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-gray-500">No teacher schedules available.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div id="content-students" class="tab-content hidden">
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Student Schedules</h2>
+        <p class="text-gray-600">Student schedule views coming soon...</p>
+    </div>
+</div>
+
+<div id="content-diagnostics" class="tab-content hidden">
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Diagnostics</h2>
+        {% if scenario.logs %}
+        <pre class="bg-gray-50 p-4 rounded-lg text-sm text-gray-700 overflow-x-auto">{{ scenario.logs }}</pre>
+        {% else %}
+        <p class="text-gray-500">No diagnostic information available.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function showTab(tabName) {
+    // Hide all tab content
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+
+    // Remove active state from all tabs
+    document.querySelectorAll('.tab-link').forEach(el => {
+        el.classList.remove('border-blue-500', 'text-blue-600');
+        el.classList.add('border-transparent', 'text-gray-500');
+    });
+
+    // Show selected tab content
+    document.getElementById('content-' + tabName).classList.remove('hidden');
+
+    // Add active state to selected tab
+    const activeTab = document.getElementById('tab-' + tabName);
+    activeTab.classList.remove('border-transparent', 'text-gray-500');
+    activeTab.classList.add('border-blue-500', 'text-blue-600');
+}
+</script>
+{% endblock %}

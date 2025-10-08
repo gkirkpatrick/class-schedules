@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}{{ school.name }} - School Scheduler{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <nav class="text-sm text-gray-500 mb-4">
+        <a href="/" class="hover:text-gray-700">Schools</a>
+        <span class="mx-2">/</span>
+        <span class="text-gray-900">{{ school.name }}</span>
+    </nav>
+
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ school.name }}</h1>
+            <div class="mt-2 flex items-center text-sm text-gray-500 space-x-4">
+                <span>{{ school.cycle_days }} days/cycle</span>
+                <span>{{ school.periods_per_day }} periods/day</span>
+                <span>{{ school.period_minutes }} min/period</span>
+            </div>
+        </div>
+        <div>
+            <a href="{% url 'timetable:scenario_create' school.id %}"
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                New Scenario
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Scenarios List -->
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">Scenarios</h2>
+        <p class="mt-1 text-sm text-gray-500">Scheduling scenarios for this school</p>
+    </div>
+
+    {% if scenarios %}
+    <ul role="list" class="divide-y divide-gray-200">
+        {% for scenario in scenarios %}
+        <li>
+            <a href="{% url 'timetable:scenario_detail' scenario.id %}" class="block hover:bg-gray-50">
+                <div class="px-4 py-4 sm:px-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-base font-medium text-blue-600">{{ scenario.name }}</p>
+                            <p class="mt-1 text-sm text-gray-500">Created {{ scenario.created_at|date:"M d, Y" }}</p>
+                        </div>
+                        <div class="ml-4">
+                            {% if scenario.status == "SOLVED" %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Solved
+                            </span>
+                            {% elif scenario.status == "RUNNING" %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                Running
+                            </span>
+                            {% elif scenario.status == "INFEASIBLE" %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                Infeasible
+                            </span>
+                            {% elif scenario.status == "DRAFT" %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                Draft
+                            </span>
+                            {% else %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                {{ scenario.status }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="px-4 py-12 text-center">
+        <p class="text-gray-500">No scenarios yet. Create your first scenario to get started.</p>
+        <a href="{% url 'timetable:scenario_create' school.id %}"
+           class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-600 bg-blue-100 hover:bg-blue-200">
+            Create Scenario
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}{{ scenario.name }} - School Scheduler{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <nav class="text-sm text-gray-500 mb-4">
+        <a href="/" class="hover:text-gray-700">Schools</a>
+        <span class="mx-2">/</span>
+        <a href="{% url 'timetable:school_detail' scenario.school.id %}" class="hover:text-gray-700">{{ scenario.school.name }}</a>
+        <span class="mx-2">/</span>
+        <span class="text-gray-900">{{ scenario.name }}</span>
+    </nav>
+
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ scenario.name }}</h1>
+            <div class="mt-2 flex items-center text-sm text-gray-500">
+                <span>Created {{ scenario.created_at|date:"M d, Y" }}</span>
+                <span class="mx-2">•</span>
+                <span>{{ scenario.school.name }}</span>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            {% if scenario.status == "DRAFT" %}
+            <form method="POST" action="{% url 'timetable:api_scenario_run' scenario.id %}"
+                  style="display: inline;"
+                  onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<svg class=\'animate-spin h-4 w-4 inline mr-2\' fill=\'none\' viewBox=\'0 0 24 24\'><circle class=\'opacity-25\' cx=\'12\' cy=\'12\' r=\'10\' stroke=\'currentColor\' stroke-width=\'4\'></circle><path class=\'opacity-75\' fill=\'currentColor\' d=\'M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\'></path></svg> Running...';">
+                {% csrf_token %}
+                <button type="submit"
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                    🚀 Run Solver
+                </button>
+            </form>
+            {% elif scenario.status == "SOLVED" %}
+            <a href="{% url 'timetable:scenario_results' scenario.id %}"
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                View Results
+            </a>
+            <form method="POST" action="{% url 'timetable:api_scenario_run' scenario.id %}"
+                  style="display: inline;"
+                  onsubmit="return confirm('This will delete existing results and re-run the solver. Continue?') && (this.querySelector('button').disabled=true, this.querySelector('button').innerHTML='<svg class=\'animate-spin h-4 w-4 inline mr-2\' fill=\'none\' viewBox=\'0 0 24 24\'><circle class=\'opacity-25\' cx=\'12\' cy=\'12\' r=\'10\' stroke=\'currentColor\' stroke-width=\'4\'></circle><path class=\'opacity-75\' fill=\'currentColor\' d=\'M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\'></path></svg> Running...', true);">
+                {% csrf_token %}
+                <button type="submit"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">
+                    🔄 Re-run Solver
+                </button>
+            </form>
+            {% elif scenario.status == "INFEASIBLE" or scenario.status == "FAILED" %}
+            <form method="POST" action="{% url 'timetable:api_scenario_run' scenario.id %}"
+                  style="display: inline;"
+                  onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<svg class=\'animate-spin h-4 w-4 inline mr-2\' fill=\'none\' viewBox=\'0 0 24 24\'><circle class=\'opacity-25\' cx=\'12\' cy=\'12\' r=\'10\' stroke=\'currentColor\' stroke-width=\'4\'></circle><path class=\'opacity-75\' fill=\'currentColor\' d=\'M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\'></path></svg> Running...';">
+                {% csrf_token %}
+                <button type="submit"
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-600 hover:bg-yellow-700">
+                    🔄 Re-run Solver
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Status Card -->
+<div class="bg-white shadow sm:rounded-lg mb-6">
+    <div class="px-4 py-5 sm:p-6">
+        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-3">
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Status</dt>
+                <dd class="mt-1">
+                    {% if scenario.status == "SOLVED" %}
+                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                        Solved
+                    </span>
+                    {% elif scenario.status == "RUNNING" %}
+                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                        Running
+                    </span>
+                    {% elif scenario.status == "INFEASIBLE" %}
+                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                        Infeasible
+                    </span>
+                    {% elif scenario.status == "DRAFT" %}
+                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                        Draft
+                    </span>
+                    {% else %}
+                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                        {{ scenario.status }}
+                    </span>
+                    {% endif %}
+                </dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Created</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ scenario.created_at|date:"M d, Y g:i A" }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Updated</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ scenario.updated_at|date:"M d, Y g:i A" }}</dd>
+            </div>
+        </dl>
+    </div>
+</div>
+
+<!-- Results Summary (if solved) -->
+{% if scenario.status == "SOLVED" %}
+<div class="bg-white shadow sm:rounded-lg mb-6">
+    <div class="px-4 py-5 sm:p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">✅ Results Summary</h3>
+        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-3">
+            <div class="bg-green-50 p-4 rounded-lg">
+                <dt class="text-sm font-medium text-green-700">Placements Created</dt>
+                <dd class="mt-1 text-3xl font-bold text-green-900">{{ scenario.placements.count }}</dd>
+                <dd class="mt-1 text-xs text-green-600">Section-time-room-teacher assignments</dd>
+            </div>
+            <div class="bg-blue-50 p-4 rounded-lg">
+                <dt class="text-sm font-medium text-blue-700">Student Enrollments</dt>
+                <dd class="mt-1 text-3xl font-bold text-blue-900">{{ scenario.enrollments.count }}</dd>
+                <dd class="mt-1 text-xs text-blue-600">Student-section assignments</dd>
+            </div>
+            <div class="bg-purple-50 p-4 rounded-lg">
+                <dt class="text-sm font-medium text-purple-700">Sections Scheduled</dt>
+                <dd class="mt-1 text-3xl font-bold text-purple-900">{{ scenario.placements.values.section.distinct.count }}</dd>
+                <dd class="mt-1 text-xs text-purple-600">Unique course sections</dd>
+            </div>
+        </dl>
+        <div class="mt-4">
+            <a href="{% url 'timetable:scenario_results' scenario.id %}"
+               class="text-blue-600 hover:text-blue-800 font-medium">
+                View Detailed Results →
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Logs Section -->
+{% if scenario.logs %}
+<div class="bg-white shadow sm:rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">📋 Solver Logs</h3>
+        <pre class="bg-gray-50 p-4 rounded-lg text-sm text-gray-700 overflow-x-auto whitespace-pre-wrap">{{ scenario.logs }}</pre>
+    </div>
+</div>
+{% endif %}
+
+{% if scenario.status == "RUNNING" %}
+<script>
+    // Poll for status updates
+    setInterval(() => {
+        fetch("{% url 'timetable:api_scenario_status' scenario.id %}")
+            .then(response => response.json())
+            .then(data => {
+                if (data.status !== "RUNNING") {
+                    window.location.reload();
+                }
+            });
+    }, 2000);
+</script>
+{% endif %}
+{% endblock %}
