@@ -68,7 +68,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Day {{ placement.day|add:1 }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">P{{ placement.period|add:1 }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {{ placement.section.course.code }}
+                            {{ placement.section.course.code }} - Section {{ placement.section.section_number }}
                             {% if placement.is_lab %}<span class="ml-1 text-xs text-blue-600">(LAB)</span>{% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ placement.teacher }}</td>
@@ -123,7 +123,7 @@
                                 <td class="border border-gray-300 px-2 py-2 text-xs">
                                     {% if cell %}
                                     <div class="bg-blue-50 border border-blue-200 rounded px-2 py-1">
-                                        <div class="font-semibold text-blue-900">{{ cell.course }}</div>
+                                        <div class="font-semibold text-blue-900">{{ cell.course }} - Section {{ cell.section_number }}</div>
                                         <div class="text-blue-700">{{ cell.room }}</div>
                                         {% if cell.is_lab %}
                                         <div class="text-xs text-blue-600 mt-1">LAB</div>

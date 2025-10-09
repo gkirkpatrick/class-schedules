@@ -21,7 +21,7 @@ class Command(BaseCommand):
             defaults={
                 "timezone": "America/New_York",
                 "cycle_days": 5,
-                "periods_per_day": 7,  # Slightly fewer periods
+                "periods_per_day": 7,  # Standard school day
                 "period_minutes": 55,
                 "recess_after_period": None,  # No recess to maximize slots
                 "lunch_window_start_period": 4,
@@ -48,7 +48,7 @@ class Command(BaseCommand):
         )
         self.stdout.write(self.style.SUCCESS("Created room features"))
 
-        # Create MORE rooms (8 regular, 2 labs, 1 gym)
+        # Create 12 rooms total (8 regular, 2 labs, 2 gyms)
         rooms_data = [
             ("Room 201", 28, []),
             ("Room 202", 28, []),
@@ -60,7 +60,8 @@ class Command(BaseCommand):
             ("Room 208", 28, []),
             ("Science Lab A", 24, [lab_feature]),
             ("Science Lab B", 24, [lab_feature]),
-            ("Gymnasium", 40, [gym_feature]),
+            ("Gymnasium A", 40, [gym_feature]),
+            ("Gymnasium B", 40, [gym_feature]),
         ]
 
         for room_name, capacity, features in rooms_data:
@@ -78,32 +79,34 @@ class Command(BaseCommand):
 
         # Create MORE teachers (12 teachers with cap 4/day)
         teachers_data = [
-            ("Sarah", "Anderson", "sarah.anderson@washington.edu"),
-            ("Michael", "Brown", "michael.brown@washington.edu"),
-            ("Jennifer", "Chen", "jennifer.chen@washington.edu"),
-            ("David", "Davis", "david.davis@washington.edu"),
-            ("Emily", "Evans", "emily.evans@washington.edu"),
-            ("Frank", "Foster", "frank.foster@washington.edu"),
-            ("Grace", "Garcia", "grace.garcia@washington.edu"),
-            ("Henry", "Harris", "henry.harris@washington.edu"),
-            ("Isabel", "Jackson", "isabel.jackson@washington.edu"),
-            ("James", "Johnson", "james.johnson@washington.edu"),
-            ("Karen", "Kim", "karen.kim@washington.edu"),
-            ("Lucas", "Lopez", "lucas.lopez@washington.edu"),
+            ("Sarah", "Anderson", "sarah.anderson@washington.edu", "English", 3),
+            ("Michael", "Brown", "michael.brown@washington.edu", "English", 3),
+            ("Jennifer", "Chen", "jennifer.chen@washington.edu", "Math", 3),
+            ("David", "Davis", "david.davis@washington.edu", "Math", 3),
+            ("Emily", "Evans", "emily.evans@washington.edu", "History", 3),
+            ("Frank", "Foster", "frank.foster@washington.edu", "History", 3),
+            ("Grace", "Garcia", "grace.garcia@washington.edu", "Science", 3),
+            ("Henry", "Harris", "henry.harris@washington.edu", "Science", 3),
+            ("Isabel", "Jackson", "isabel.jackson@washington.edu", "PE", 2),
+            ("James", "Johnson", "james.johnson@washington.edu", "PE", 2),
+            ("Karen", "Kim", "karen.kim@washington.edu", "PE", 2),
+            ("Lucas", "Lopez", "lucas.lopez@washington.edu", "PE", 2),
         ]
 
-        for first, last, email in teachers_data:
+        for first, last, email, subject, max_sections in teachers_data:
             teacher, created = Teacher.objects.get_or_create(
                 email=email,
                 defaults={
                     "school": school,
                     "first_name": first,
                     "last_name": last,
-                    "daily_teaching_cap": 4,  # Higher capacity
+                    "subject": subject,
+                    "daily_teaching_cap": 4,
+                    "max_sections": max_sections,
                 },
             )
             if created:
-                self.stdout.write(f"  Created teacher: {first} {last}")
+                self.stdout.write(f"  Created teacher: {first} {last} ({subject})")
 
         self.stdout.write(self.style.SUCCESS(f"Created {len(teachers_data)} teachers"))
 
@@ -137,41 +140,41 @@ class Command(BaseCommand):
                 "code": "ENG9",
                 "name": "English 9",
                 "duration_periods": 1,
-                "meets_per_week": 4,  # 4 days per week (reduced from 5)
+                "meets_per_week": 5,  # Meets every day at the same period
                 "is_lab": False,
-                "capacity": 28,
+                "capacity": 5,  # Small sections (30 students ÷ 6 sections = 5 each)
             },
             {
                 "code": "MATH9",
                 "name": "Algebra 1",
                 "duration_periods": 1,
-                "meets_per_week": 4,  # 4 days per week (reduced from 5)
+                "meets_per_week": 5,  # Meets every day at the same period
                 "is_lab": False,
-                "capacity": 28,
+                "capacity": 5,
             },
             {
                 "code": "HIST9",
                 "name": "World History",
                 "duration_periods": 1,
-                "meets_per_week": 3,  # 3 days per week (reduced from 4)
+                "meets_per_week": 5,  # Meets every day at the same period
                 "is_lab": False,
-                "capacity": 28,
+                "capacity": 5,
             },
             {
                 "code": "SCI9",
                 "name": "Biology",
                 "duration_periods": 1,
-                "meets_per_week": 3,  # 3 days per week (+ 1 lab)
+                "meets_per_week": 4,  # Meets 4 days (lab on 5th day)
                 "is_lab": False,
-                "capacity": 24,
+                "capacity": 5,
             },
             {
                 "code": "PE9",
                 "name": "Physical Education",
                 "duration_periods": 1,
-                "meets_per_week": 2,  # 2 days per week
+                "meets_per_week": 5,  # Meets every day at the same period
                 "is_lab": False,
-                "capacity": 40,
+                "capacity": 4,  # 30 students ÷ 8 sections ≈ 4 each
                 "room_feature": gym_feature,
             },
         ]
@@ -230,9 +233,15 @@ class Command(BaseCommand):
             "PE9": all_teachers[8:12],   # Jackson, Johnson, Kim, Lopez
         }
 
-        # Create 2 sections for each main course (capacity 28 each = 56 total > 30 students)
+        # Create sections for each main course
+        # With same-period constraint: each section occupies 1 room at 1 period across all 5 days
+        # At any given period, we can have up to 26 rooms of classes happening simultaneously
+        # So we just need enough periods for teachers to teach their sections
         for course in Course.objects.filter(school=school, is_lab=False):
-            num_sections = 2  # 2 sections per course
+            if course.code == "PE9":
+                num_sections = 8  # 4 PE teachers × 2 sections each
+            else:
+                num_sections = 6  # 2 teachers × 3 sections each
 
             for section_num in range(num_sections):
                 # Determine room candidates
@@ -244,6 +253,7 @@ class Command(BaseCommand):
                 # Just create sections, don't use get_or_create
                 section = Section.objects.create(
                     course=course,
+                    section_number=section_num + 1,  # 1-indexed
                     planned_count_per_week=course.meets_per_week,
                 )
 
@@ -253,20 +263,22 @@ class Command(BaseCommand):
                 section.room_candidates.set(room_candidates)
                 sections_created += 1
                 self.stdout.write(
-                    f"  Created section {section_num+1} for {course.code}"
+                    f"  Created {course.code} - Section {section_num+1}"
                 )
 
-        # Create 2 lab sections (capacity 24 each = 48 total > 30 students)
-        lab_course = Course.objects.get(school=school, code="SCI9_LAB")
-        for lab_num in range(2):
+        # Create lab sections (6 sections to match SCI9 sections)
+        # Each lab meets 1x/week on the day SCI9 doesn't meet
+        for section_num in range(6):
             lab_section = Section.objects.create(
-                course=lab_course,
-                planned_count_per_week=lab_course.meets_per_week,
+                course=sci9_lab,
+                section_number=section_num + 1,
+                planned_count_per_week=1,  # Labs meet 1x per week
             )
+            # Same teachers as SCI9 (science teachers)
             lab_section.teacher_candidates.set(teacher_assignments["SCI9_LAB"])
             lab_section.room_candidates.set(lab_rooms)
             sections_created += 1
-            self.stdout.write(f"  Created lab section {lab_num+1}")
+            self.stdout.write(f"  Created SCI9_LAB - Section {section_num+1}")
 
         self.stdout.write(self.style.SUCCESS(f"Created {sections_created} sections"))
 

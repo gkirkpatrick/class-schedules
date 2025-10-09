@@ -50,6 +50,10 @@ class Section(TimestampedModel):
     """Represents a section of a course with specific teacher/room candidates."""
 
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="sections")
+    section_number = models.IntegerField(
+        default=1,
+        help_text="Section number (e.g., 1, 2, 3 for multiple sections of same course)"
+    )
     teacher_candidates = models.ManyToManyField(
         Teacher, related_name="candidate_sections", help_text="Teachers who can teach this section"
     )
@@ -66,10 +70,11 @@ class Section(TimestampedModel):
     )
 
     class Meta:
-        ordering = ["course"]
+        ordering = ["course", "section_number"]
+        unique_together = [["course", "section_number"]]
 
     def __str__(self) -> str:
-        return f"Section of {self.course.code}"
+        return f"{self.course.code} - Section {self.section_number}"
 
 
 class RequirementTemplate(TimestampedModel):

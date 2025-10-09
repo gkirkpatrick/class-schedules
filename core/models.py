@@ -95,10 +95,19 @@ class Teacher(TimestampedModel):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
+    subject = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Subject area (e.g., Math, English, Science, History, PE)",
+    )
     daily_teaching_cap = models.IntegerField(
         null=True,
         blank=True,
         help_text="Max periods per day (overrides school default if set)",
+    )
+    max_sections = models.IntegerField(
+        default=3,
+        help_text="Maximum number of unique sections this teacher can teach",
     )
     available_mask = models.JSONField(
         default=dict,
@@ -111,6 +120,7 @@ class Teacher(TimestampedModel):
         indexes = [
             models.Index(fields=["school", "last_name", "first_name"]),
             models.Index(fields=["email"]),
+            models.Index(fields=["school", "subject"]),
         ]
 
     def __str__(self) -> str:

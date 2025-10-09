@@ -23,11 +23,25 @@
         </div>
         <div class="flex gap-2">
             {% if scenario.status == "DRAFT" %}
+            <!-- Pre-Check Button -->
+            <button type="button"
+                    hx-get="{% url 'timetable:scenario_precheck' scenario.id %}"
+                    hx-target="#precheck-results"
+                    hx-indicator="#precheck-spinner"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">
+                🔍 Pre-Check
+                <svg id="precheck-spinner" class="htmx-indicator animate-spin ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
             <form method="POST" action="{% url 'timetable:api_scenario_run' scenario.id %}"
                   style="display: inline;"
+                  id="run-solver-form"
                   onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='<svg class=\'animate-spin h-4 w-4 inline mr-2\' fill=\'none\' viewBox=\'0 0 24 24\'><circle class=\'opacity-25\' cx=\'12\' cy=\'12\' r=\'10\' stroke=\'currentColor\' stroke-width=\'4\'></circle><path class=\'opacity-75\' fill=\'currentColor\' d=\'M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\'></path></svg> Running...';">
                 {% csrf_token %}
                 <button type="submit"
+                    id="run-solver-btn"
                     class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
                     🚀 Run Solver
                 </button>
@@ -103,6 +117,9 @@
     </div>
 </div>
 
+<!-- Pre-Check Results Container -->
+<div id="precheck-results" class="mb-6"></div>
+
 <!-- Results Summary (if solved) -->
 {% if scenario.status == "SOLVED" %}
 <div class="bg-white shadow sm:rounded-lg mb-6">
@@ -144,6 +161,32 @@
     </div>
 </div>
 {% endif %}
+
+<script>
+// Handle precheck results and disable Run Solver button if FAIL status
+document.addEventListener('htmx:afterSwap', function(e) {
+    if (e.detail.target.id === 'precheck-results') {
+        const report = e.detail.target.querySelector('.precheck-report');
+        const runSolverBtn = document.getElementById('run-solver-btn');
+
+        if (report && runSolverBtn) {
+            if (report.dataset.status === 'FAIL') {
+                // Disable button and update styling
+                runSolverBtn.disabled = true;
+                runSolverBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-400', 'hover:bg-gray-400');
+                runSolverBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                runSolverBtn.title = 'Fix errors before running solver';
+            } else {
+                // Re-enable button if previously disabled
+                runSolverBtn.disabled = false;
+                runSolverBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-400', 'hover:bg-gray-400');
+                runSolverBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                runSolverBtn.title = '';
+            }
+        }
+    }
+});
+</script>
 
 {% if scenario.status == "RUNNING" %}
 <script>
